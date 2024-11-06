@@ -32,33 +32,27 @@ public class Main {
             throw new RuntimeException(e);
         }
         XSSFSheet sheet = workbook.getSheetAt(0);
+
         // Create a list to contain every type of work
         LinkedList<String> t_work = new LinkedList<>();
-        // Create final hashmap for save result
-        HashMap<String, Double> the_final_result = new HashMap<>();
-        int save_index = 0, start_save_index = 3;
+        // Index to save all type of work
+        int start_save_index = 3;
+        // Read all type of work
         Row rx = sheet.getRow(5);
         Cell cx = rx.getCell(start_save_index);
         while (cx.getCellType() != CellType.BLANK) {
-            if (cx.getStringCellValue().toString().equals("$")) {
-                the_final_result.put(cx.getStringCellValue().toString() + Integer.toString(save_index), 0.0);
-
-                save_index += 1;
-            } else {
-                the_final_result.put(cx.getStringCellValue().toString(), 0.0);
+            if (!cx.getStringCellValue().toString().equals("$")) {
                 t_work.add(cx.getStringCellValue().toString());
             }
-
             cx = rx.getCell(start_save_index + 1);
             start_save_index += 1;
         }
 
-        //Create a list to save everyone data
-        LinkedList<LinkedList<HashMap<String, Double>>> final_list = new LinkedList<>();
+        //Create a list to save every day data
+        LinkedList<LinkedList<HashMap<String, Double>>> day_list = new LinkedList<>();
         //Create a linked list to save month result
         LinkedList<HashMap<String, Double>> m_list = new LinkedList<>();
-        //Create a list to contain all type of work
-
+        //Save every day's data
         for (Row row : sheet) {
             int day_index = start_save_index + 1;
             //Create a hashmap to save day data
@@ -124,17 +118,177 @@ public class Main {
                         break;
                 }
             }
-            final_list.add(new LinkedList<>(m_list));
+            day_list.add(new LinkedList<>(m_list));
             m_list.clear();
         }
-        for (LinkedList<HashMap<String, Double>> l : final_list) {
-            for (HashMap<String, Double> h : l) {
-                for (String x : t_work) {
-                    System.out.print(h.get(x) + " ");
-                }
-                System.out.print(" || ");
+//        for (LinkedList<HashMap<String, Double>> l : day_list) {
+//            for (HashMap<String, Double> h : l) {
+//                for (String x : t_work) {
+//                    if(h.get(x) != null){
+//                        if(h.get(x) > 0){
+//                            System.out.print(x + "-" + h.get(x) + " ");
+//                        }
+//                    }
+//                }
+//                System.out.print(" || ");
+//            }
+//            System.out.println();;
+//        }
+
+        // Create a list to save all employee data
+        LinkedList<Emp> emp_list = new LinkedList<>();
+        for(Row row : sheet){
+            if (row.getRowNum() < 6) {
+                continue;
             }
-            System.out.println();;
+            if (row.getCell(0).getCellType() == CellType.BLANK) {
+                break;
+            }
+            Emp emp = new Emp();
+            for (Cell cell : row){
+                switch (cell.getCellType()) {
+                    case CellType.STRING:
+                        if(cell.getColumnIndex() == 1){
+                            emp.setID(cell.getRichStringCellValue().getString());
+                        }
+                        else if(cell.getColumnIndex() == 2){
+                            emp.setNAME(cell.getRichStringCellValue().getString());
+                        }
+                        else {
+                            break;
+                        }
+                        break;
+                    case CellType.BLANK:
+                        break;
+                }
+                if(cell.getColumnIndex() >= 3){
+                    break;
+                }
+            }
+            emp_list.add(emp);
         }
+
+        // Create list to save salary table
+        LinkedList<HashMap<String, Double>> salary_table = new LinkedList<>();
+
+        for(Row row : sheet){
+            if (row.getRowNum() < 6) {
+                continue;
+            }
+            if (row.getCell(0).getCellType() == CellType.BLANK) {
+                break;
+            }
+            HashMap<String, Double> m_salary = new HashMap<>();
+            for (Cell cell : row){
+                switch (cell.getCellType()) {
+                    case CellType.STRING:
+                        break;
+                    case CellType.BLANK:
+                        Row r_salary_b = sheet.getRow(5);
+                        Cell c_salary_b = r_salary_b.getCell(cell.getColumnIndex());
+                        if(cell.getColumnIndex() < 3){
+                            break;
+                        }
+                        if (c_salary_b.getCellType() != CellType.BLANK) {
+                            if (c_salary_b.getStringCellValue().toString().equals("$")) {
+                                int reverse_index = 1;
+                                while(true){
+                                    if(cell.getColumnIndex() < 1){
+                                        break;
+                                    }
+                                    Row rt = sheet.getRow(5);
+                                    Cell ct = rt.getCell(cell.getColumnIndex() - reverse_index);
+                                    if(ct.getStringCellValue().toString().equals("$")){
+                                        break;
+                                    } else if (ct.getCellType() == CellType.BLANK) {
+                                        break;
+                                    }
+                                    if(cell.getColumnIndex() < start_save_index){
+                                        m_salary.put(ct.getStringCellValue().toString(), cell.getNumericCellValue());
+                                        reverse_index += 1;
+                                    }
+                                }
+
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        else if (c_salary_b.getCellType() == CellType.BLANK) {
+                            if (c_salary_b.getStringCellValue().toString().equals("$")) {
+                                int reverse_index = 1;
+                                while (true) {
+                                    Row rt = sheet.getRow(5);
+                                    Cell ct = rt.getCell(cell.getColumnIndex() - reverse_index);
+                                    if (ct.getStringCellValue().toString().equals("$")) {
+                                        break;
+                                    }
+                                    if (cell.getColumnIndex() < start_save_index) {
+                                        m_salary.put(ct.getStringCellValue().toString(), cell.getNumericCellValue());
+                                        reverse_index += 1;
+                                    }
+                                }
+
+                            } else {
+                                break;
+                            }
+                        }
+                        break;
+                    case CellType.NUMERIC, CellType.FORMULA:
+                        Row r_salary = sheet.getRow(5);
+                        Cell c_salary = r_salary.getCell(cell.getColumnIndex());
+                        if(cell.getColumnIndex() < 3){
+                            break;
+                        }
+                        if (c_salary.getCellType() != CellType.BLANK) {
+                            if (c_salary.getStringCellValue().toString().equals("$")) {
+                                int reverse_index = 1;
+                                while(true){
+                                    Row rt = sheet.getRow(5);
+                                    Cell ct = rt.getCell(cell.getColumnIndex() - reverse_index);
+                                    if(ct.getStringCellValue().toString().equals("$")){
+                                        break;
+                                    }
+                                    if(cell.getColumnIndex() < start_save_index){
+                                        m_salary.put(ct.getStringCellValue().toString(), cell.getNumericCellValue());
+                                        reverse_index += 1;
+                                    }
+                                }
+
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        else if (c_salary.getCellType() == CellType.BLANK) {
+                            if (c_salary.getStringCellValue().toString().equals("$")) {
+                                int reverse_index = 1;
+                                while (true) {
+                                    Row rt = sheet.getRow(5);
+                                    Cell ct = rt.getCell(cell.getColumnIndex() - reverse_index);
+                                    if (ct.getStringCellValue().toString().equals("$")) {
+                                        break;
+                                    }
+                                    if (cell.getColumnIndex() < start_save_index) {
+                                        m_salary.put(ct.getStringCellValue().toString(), cell.getNumericCellValue());
+                                        reverse_index += 1;
+                                    }
+                                }
+
+                            } else {
+                                break;
+                            }
+                        }
+                        break;
+                }
+                if(cell.getColumnIndex() >= start_save_index){
+                    break;
+                }
+            }
+            salary_table.add(new HashMap<>(m_salary));
+            m_salary.clear();
+        }
+
+        System.out.println();
     }
 }
