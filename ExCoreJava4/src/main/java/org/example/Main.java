@@ -33,7 +33,7 @@ public class Main {
         }
         XSSFSheet sheet = workbook.getSheetAt(0);
         // Create a list to contain every type of work
-        List<String> t_work = new ArrayList<>();
+        LinkedList<String> t_work = new LinkedList<>();
         // Create final hashmap for save result
         HashMap<String, Double> the_final_result = new HashMap<>();
         int save_index = 0, start_save_index = 3;
@@ -71,11 +71,8 @@ public class Main {
             }
 
             for (Cell cell : row) {
-                Row r = sheet.getRow(cell.getRowIndex());
-                Cell c = r.getCell(cell.getColumnIndex());
                 switch (cell.getCellType()) {
                     case CellType.STRING:
-                        System.out.print(cell.getRichStringCellValue().getString() + "\t");
                         break;
                     case CellType.NUMERIC:
                         Row rt = sheet.getRow(5);
@@ -95,22 +92,9 @@ public class Main {
                                 day_dt.put(ct.getStringCellValue().toString(), data);
                                 day_index += 1;
                             }
-                            System.out.print(ct.getStringCellValue().toString() + "-" + day_dt.get(ct.getStringCellValue().toString()) + "\t");
                         }
                         break;
                     case CellType.FORMULA:
-                        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-                        switch (evaluator.evaluateFormulaCell(cell)) {
-                            case BOOLEAN:
-                                System.out.print(cell.getBooleanCellValue() + "\t");
-                                break;
-                            case NUMERIC:
-                                System.out.print(cell.getNumericCellValue() + "\t");
-                                break;
-                            case STRING:
-                                System.out.print(cell.getStringCellValue() + "\t");
-                                break;
-                        }
                         break;
                     case CellType.BLANK:
                         if(cell.getColumnIndex() > start_save_index){
@@ -140,12 +124,10 @@ public class Main {
                         break;
                 }
             }
-            System.out.println();
             final_list.add(new LinkedList<>(m_list));
             m_list.clear();
         }
         for (LinkedList<HashMap<String, Double>> l : final_list) {
-            System.out.println(" = = = = = = = = = = = = = = = ");
             for (HashMap<String, Double> h : l) {
                 for (String x : t_work) {
                     System.out.print(h.get(x) + " ");
