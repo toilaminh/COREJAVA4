@@ -289,6 +289,64 @@ public class Main {
             m_salary.clear();
         }
 
+        // Total salary from file
+        LinkedList<Double> file_salary = new LinkedList<>();
+        for(Row r : sheet){
+            if(r.getRowNum()<6){
+                continue;
+            }
+            if (r.getCell(0).getCellType() == CellType.BLANK) {
+                break;
+            }
+            for (Cell c : r){
+                if(c.getColumnIndex() != start_save_index){
+                    continue;
+                }
+                file_salary.add(c.getNumericCellValue());
+            }
+        }
         System.out.println();
+        displayEmp(emp_list,salary_table,day_list,file_salary);
+
+    }
+
+    public static void displayEmp(LinkedList<Emp> emp, LinkedList<HashMap<String, Double>> salary, LinkedList<LinkedList<HashMap<String, Double>>> month, LinkedList<Double> file_salary){
+        int total_index = emp.size();
+        for(int i = 0;i < total_index;i++){
+            System.out.println("= = = = = = = = = = = = = = = = = = =");
+            System.out.println("\tID            : " + emp.get(i).getID());
+            System.out.println("\tEmployee name : " + emp.get(i).getNAME());
+            LinkedList<HashMap<String, Double>> e_month = month.get(i);
+            HashMap<String, Double> e_salary = salary.get(i);
+            double month_salary = 0;
+            for(int j = 0;j < e_month.size();j++){
+                HashMap<String, Double> e_day = e_month.get(j);
+                double total_day_work_hour = 0;
+                for(double data : e_day.values()){
+                    total_day_work_hour += data;
+                }
+                if(total_day_work_hour == 0){
+                    continue;
+                }
+                System.out.print("\tDay " + String.format("%-2s",j+1) + " [ ");
+                double day_salary = 0;
+                for(String work_type : e_day.keySet()){
+                    if(e_day.get(work_type) > 0){
+                        day_salary += e_salary.get(work_type) * e_day.get(work_type);
+                        System.out.print(work_type + " : " + e_day.get(work_type) + " | ");
+                    }
+                }
+                System.out.print("Total work hour: " + total_day_work_hour);
+                System.out.println(" | Day salary: " + String.format("%.0f", day_salary) + " ]");
+                month_salary += day_salary;
+            }
+            System.out.println("\tTotal salary : " + String.format("%.0f",month_salary));
+            if(String.format("%.0f",file_salary.get(i)).equals(String.format("%.0f",month_salary))){
+                System.out.println("\tTotal salary is equals with data from file!");
+            }
+            else{
+                System.out.println("\tTotal salary is not equals with data from file!");
+            }
+        }
     }
 }
